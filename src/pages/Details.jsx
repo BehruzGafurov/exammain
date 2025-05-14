@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteById, getInvoice, updateById } from "../request";
-
 import {
   Dialog,
   DialogContent,
@@ -9,18 +8,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import StatusBadje from "../components/StatusBadje";
 import { Button, buttonVariants } from "../components/ui/button";
-import { DialogClose } from "@radix-ui/react-dialog";
 import { toast } from "sonner";
 import { useAppStore } from "../lib/zustand";
 
@@ -28,6 +25,7 @@ export default function Details() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { updateInvoices, setEditedData, setSheetOpen } = useAppStore();
+
   const [loadingState, setLoadingState] = useState({
     deleteLoading: false,
     updateLoading: false,
@@ -37,111 +35,88 @@ export default function Details() {
   const [invoice, setInvoice] = useState(null);
 
   useEffect(() => {
-    setLoadingState((prev) => ({ ...prev, loading: true }));
+    setLoadingState((s) => ({ ...s, loading: true }));
     getInvoice(id)
-      .then((res) => {
-        setInvoice(res);
-      })
-      .catch(({ message }) => {
-        setError(message);
-      })
+      .then((data) => setInvoice(data))
+      .catch(({ message }) => setError(message))
       .finally(() => {
-        setLoadingState((prev) => ({ ...prev, loading: false }));
+        setLoadingState((s) => ({ ...s, loading: false }));
       });
   }, [id]);
 
-  if (loadingState.loading) {
-    return <p>Loading...</p>;
-  }
+  if (loadingState.loading) return <p className="text-center">Loading...</p>;
+  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (!invoice) return <p className="text-center">No data found</p>;
 
-  if (error) {
-    return <p>{error}</p>;
-  }
+  const handleDelete = async () => {
+    setLoadingState((s) => ({ ...s, deleteLoading: true }));
+    try {
+      const updated = await deleteById(invoice.id);
+      updateInvoices(updated);
+      navigate("/");
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoadingState((s) => ({ ...s, deleteLoading: false }));
+    }
+  };
 
-  if (!invoice || Object.keys(invoice).length === 0) {
-    return <p>No invoice data available</p>;
-  }
+  const handleUpdate = async () => {
+    setLoadingState((s) => ({ ...s, updateLoading: true }));
+    try {
+      const updated = await updateById(invoice.id, { status: "paid" });
+      updateInvoices(updated);
+      navigate(-1);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoadingState((s) => ({ ...s, updateLoading: false }));
+    }
+  };
 
-  function handleDelete(id) {
-    setLoadingState((prev) => ({ ...prev, deleteLoading: true }));
-    deleteById(id)
-      .then((res) => {
-        updateInvoices(res);
-        navigate("/");
-      })
-      .catch(({ message }) => {
-        toast.error(message);
-      })
-      .finally(() => {
-        setLoadingState((prev) => ({ ...prev, deleteLoading: false }));
-      });
-  }
-
-  function handleUpdate(id, data) {
-    setLoadingState((prev) => ({ ...prev, updateLoading: true }));
-    updateById(id, data)
-      .then((res) => {
-        updateInvoices(res);
-        navigate(-1);
-      })
-      .catch(({ message }) => {
-        toast.error(message);
-      })
-      .finally(() => {
-        setLoadingState((prev) => ({ ...prev, updateLoading: false }));
-      });
-  }
-
-  function handleEdit(data) {
+  const handleEdit = () => {
+    setEditedData(invoice);
     setSheetOpen();
-    setEditedData(data);
-  }
+  };
 
   return (
-    <div className="py-5">
-      <div className="base-container">
+    <div className="py-5 px-4 md:px-8">
+      <div className="max-w-4xl mx-auto space-y-6">
         <Card>
-          <CardContent className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span>Status:</span>
+          <CardContent className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0 p-5">
+            <div className="flex items-center gap-3 flex-wrap text-sm">
+              <span className="text-muted-foreground">Status:</span>
               <StatusBadje status={invoice.status} />
             </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => {
-                  handleEdit(invoice);
-                }}
-                variant="ghost"
-              >
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+              <Button onClick={handleEdit} variant="ghost" className="w-full sm:w-auto">
                 Edit
               </Button>
 
               <Dialog>
-                <DialogTrigger
-                  className={buttonVariants({ variant: "destructive" })}
-                >
-                  <Button variant="destructive">Delete</Button>
+                <DialogTrigger asChild>
+                  <Button variant="destructive" className="w-full sm:w-auto">
+                    Delete
+                  </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Confirm Deletion</DialogTitle>
+                    <DialogTitle>Delete Invoice?</DialogTitle>
                     <DialogDescription>
-                      Are you sure you want to delete invoice #
-                      {invoice.invoiceId}? This action cannot be undone.
+                      This will permanently delete invoice #{invoice.invoiceId}.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex gap-3 justify-center">
-                    <DialogClose
-                      className={buttonVariants({ variant: "ghost" })}
-                    >
-                      Cancel
+                  <div className="flex justify-end gap-3 mt-4">
+                    <DialogClose asChild>
+                      <Button variant="ghost">Cancel</Button>
                     </DialogClose>
                     <Button
-                      onClick={() => handleDelete(invoice.id)}
                       variant="destructive"
+                      onClick={handleDelete}
                       disabled={loadingState.deleteLoading}
                     >
-                      {loadingState.deleteLoading ? "Loading..." : "Delete"}
+                      {loadingState.deleteLoading ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -149,12 +124,11 @@ export default function Details() {
 
               {invoice.status === "pending" && (
                 <Button
-                  onClick={() =>
-                    handleUpdate(invoice.id, { status: "paid" })
-                  }
+                  onClick={handleUpdate}
                   disabled={loadingState.updateLoading}
+                  className="w-full sm:w-auto"
                 >
-                  {loadingState.updateLoading ? "Loading..." : "Mark as Paid"}
+                  {loadingState.updateLoading ? "Updating..." : "Mark as Paid"}
                 </Button>
               )}
             </div>

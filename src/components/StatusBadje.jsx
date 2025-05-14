@@ -23,10 +23,10 @@ export default function StatusBadje({ status = "draft" }) {
 
   return (
     <span
-      className={`${buttonVariants({ variant: "outline" })} min-w-[104px] border-none`}
-      style={{ backgroundColor: current.bg }}
+      className={`${buttonVariants({ variant: "outline" })} flex items-center gap-2 px-3 py-1 rounded-md text-sm font-medium border-none`}
+      style={{ backgroundColor: current.bg, minWidth: "fit-content" }}
     >
-      <span className={`inline-block w-2 h-2 rounded-full ${current.dot}`} />
+      <span className={`w-2 h-2 rounded-full ${current.dot}`} />
       <span className={`capitalize ${current.text}`}>{status}</span>
     </span>
   );

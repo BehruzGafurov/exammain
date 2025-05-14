@@ -21,14 +21,13 @@ export default function MyCard({
     navigate(`/${id}`);
   };
 
-  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
-      weekday: "short", 
-      day: "numeric", 
-      month: "short", 
-      year: "numeric"
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
@@ -42,16 +41,27 @@ export default function MyCard({
   return (
     <Card
       onClick={handleNavigate}
-      className="border-2 border-transparent hover:border-blue-400 transition-colors"
+      className="border-2 border-transparent hover:border-blue-400 transition-colors cursor-pointer"
     >
       <CardHeader>
-        <div className="flex items-center justify-between space-x-4">
-          <CardTitle>#{id}</CardTitle>
-          <CardDescription>{formatDate(createdAt)}</CardDescription>
-          <span className="w-[110px] truncate">{clientName}</span>
-          <span>{formatTotal(total)}</span>
-          <StatusBadje status={status} />
-          <ArrowRight className="text-[#7C5DFA]" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6 items-center">
+          <CardTitle className="text-base lg:text-lg">#{id}</CardTitle>
+
+          <CardDescription className="text-sm text-muted-foreground">
+            {formatDate(createdAt)}
+          </CardDescription>
+
+          <span className="text-sm truncate">{clientName}</span>
+
+          <span className="text-sm font-semibold">{formatTotal(total)}</span>
+
+          <div className="w-fit">
+            <StatusBadje status={status} />
+          </div>
+
+          <div className="flex justify-end lg:justify-center">
+            <ArrowRight className="text-[#7C5DFA] w-5 h-5" />
+          </div>
         </div>
       </CardHeader>
     </Card>

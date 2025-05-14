@@ -6,84 +6,68 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { ArrowBigDown, Moon } from "lucide-react";
+import { ArrowBigDown, Moon, Sun } from "lucide-react";
 import { Button } from "./ui/button";
 import { useAppStore } from "../lib/zustand";
-import { Sun } from "lucide-react";
 
 export default function ThemesToggle() {
   const { themes } = useAppStore();
-
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "default");
 
-  function handleTheme(type, mode) {
+  const handleTheme = (type, mode) => {
     const html = document.documentElement;
-    let isDark = html.dataset.theme && html.dataset.theme.startsWith("dark-");
+    const isDark = html.dataset.theme?.startsWith("dark-");
 
     if (mode === "theme") {
-      if (isDark) {
-        html.dataset.theme = `dark-${type}`;
-        setTheme(`dark-${type}`);
-      } else {
-        html.dataset.theme = type;
-        setTheme(type);
-      }
+      html.dataset.theme = isDark ? `dark-${type}` : type;
+      setTheme(html.dataset.theme);
     } else if (mode === "dark") {
-      if (type.startsWith("dark-")) {
-        html.dataset.theme = type.replace("dark-", "");
-        setTheme(type.replace("dark-", ""));
-      } else {
-        html.dataset.theme = `dark-${type}`;
-        setTheme(`dark-${type}`);
-      }
+      html.dataset.theme = type.startsWith("dark-") ? type.replace("dark-", "") : `dark-${type}`;
+      setTheme(html.dataset.theme);
     }
-  }
+  };
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
   return (
-    <div className="flex gap-5 md:flex-col md:items-start">
+    <div className="flex items-center gap-3 md:flex-col md:items-start">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="secondary">
-            <span className={"md:hidden"}>Change theme</span>
-            <ArrowBigDown />
+          <Button variant="secondary" size="icon" className="w-9 h-9 md:w-auto md:px-3">
+            <ArrowBigDown className="w-5 h-5" />
+            <span className="sr-only">Change Theme</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 ml-[80px]">
+
+        <DropdownMenuContent className="w-48 md:ml-0">
           <DropdownMenuLabel>Themes</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <div className="flex flex-col">
-            {themes.map((el) => {
-              return (
-                <Button
-                  key={el}
-                  onClick={() => {
-                    handleTheme(el, "theme");
-                  }}
-                  className={"justify-start"}
-                  variant="ghost"
-                >
-                  {el}
-                </Button>
-              );
-            })}
+            {themes.map((el) => (
+              <Button
+                key={el}
+                onClick={() => handleTheme(el, "theme")}
+                variant="ghost"
+                className="justify-start text-sm w-full"
+              >
+                {el}
+              </Button>
+            ))}
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+
       <Button
-        size={"icon"}
-        onClick={() => {
-          handleTheme(theme, "dark");
-        }}
+        size="icon"
+        variant="outline"
+        className="w-9 h-9"
+        onClick={() => handleTheme(theme, "dark")}
       >
-        {theme.startsWith("dark-") ? <Sun /> : <Moon />}
+        {theme.startsWith("dark-") ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        <span className="sr-only">Toggle Dark Mode</span>
       </Button>
     </div>
   );
